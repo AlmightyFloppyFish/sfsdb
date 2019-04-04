@@ -57,7 +57,7 @@ impl crate::database::cached::CachedDB {
             if c > i {
                 break
             } else if self.cache_limit.is_some() {
-                if c > self.cache_limit.unwrap() { break };
+                if c >= self.cache_limit.unwrap() { break };
             }
 
             should_exist.insert(k.clone(), ());

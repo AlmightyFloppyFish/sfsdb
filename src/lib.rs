@@ -59,6 +59,7 @@ impl GenericDatabase for Database {
             Cached(db) => db.load(identifier),
         }
     }
+    // TODO: Should return Error
     fn delete(&mut self, identifier: &str) {
         match self {
             Simple(db) => db.delete(identifier),
