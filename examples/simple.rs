@@ -2,7 +2,7 @@ use sfsdb::GenericDatabase;
 use serde::{Serialize, Deserialize};
 use std::time::{SystemTime, Duration};
 
-#[derive(Serialize, Deserialize, Debug, Eq, PartialEq, Clone)]
+#[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct TestData {
     pub first_entry: String,
     pub second_entry: u64,
