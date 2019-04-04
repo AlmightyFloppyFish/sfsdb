@@ -24,7 +24,7 @@ fn main() {
 
     // Don't unwrap, remember to use proper error handling in actual applications
     db.save("some_key", u.clone()).unwrap();
-    let retrieved = db.load::<TestData>(key).unwrap();
+    let retrieved = db.load::<TestData>("some_key").unwrap();
 
     assert_eq!(retrieved, u);
 }
