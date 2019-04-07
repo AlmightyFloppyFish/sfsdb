@@ -1,34 +1,86 @@
 mod index;
 
-use crate::error::DBError;
 use serde::{Serialize, Deserialize};
+use crate::error::DBError;
+use crate::GenericDatabase;
+use crate::filesystem::*;
+use std::path::PathBuf;
 
-pub struct IndexedDB {
-    // Saves an index of the database in memory.
-    // Improves performance of checking if things exist or not.
-    // In the future i could also add search feature for this
-    index_root: index::File,
-
+pub struct IndexedDB<T> {
+    index: index::Index<T>,
     location: String,
 }
 
-impl IndexedDB {
-    pub fn location(&self) -> &str {
+impl <I>GenericDatabase for IndexedDB<I> {
+    fn location(&self) -> &str {
         &self.location
     }
-    pub fn exists(&self, name: &str) -> bool {
-        false
+    fn exists(&self, key: &str) -> bool {
+        let mut p = PathBuf::new();
+        p.push(&self.location);
+        p.push(key);
+        p.exists()
     }
-    pub fn save<T: Serialize>(&mut self,key: &str, data: T) -> Result<(), DBError> {
+    fn save<T>(&mut self, key: &str, value: T) -> Result<(), DBError> 
+        where for<'de> T: Deserialize<'de> + Serialize + Clone
+    {
+        let mut path = PathBuf::new();
+        path.push(&self.location);
+        path.push(key);
+        fs_save(&path, &value)?;
         Ok(())
     }
-    pub fn load<T>(&self, identifier: &str) -> Result<T, DBError> where for<'de> T: Deserialize<'de> {
-        Err(DBError::load(""))
+    fn load<T>(&mut self, key: &str) -> Result<T, DBError> where for<'de> T: Deserialize<'de> {
+        let mut path = PathBuf::new();
+        path.push(&self.location());
+        path.push(key);
+        let v = fs_load::<T>(&path)?;
+        Ok(v)
+    }
+    fn delete(&mut self, key: &str) {
+        let mut path = PathBuf::new();
+        path.push(&self.location());
+        path.push(key);
+        fs_delete(&path);
+        self.index.delete(key);
+    }
+}
+
+impl <I>IndexedDB<I> {
+    pub fn save_with_index<T>(&mut self, key: &str, data: T, index: I) -> Result<(), DBError> 
+        where for<'de> T: Deserialize<'de> + Serialize + Clone
+    {
+        self.save(key, data)?;
+        Ok(self.index.attach(key, index))
+    }
+
+    pub fn add_index(&mut self, key: &str, index: I) {
+        self.index.attach(key, index)
+    }
+
+    pub fn get_index(&self, key: &str) -> Option<&I> {
+        self.index.get(key)
+    }
+
+    pub fn del_index(&mut self, key: &str) {
+        self.index.delete(key);
+    }
+
+    pub fn search_with<F>(&self, apply: F) -> Vec<String> 
+        where F: Fn(&I) -> bool 
+    {
+        let mut results = Vec::new();
+        for (k, v) in self.index.0.iter() {
+            if apply(&v) {
+                results.push((*k).clone());
+            };
+        };
+        return results
     }
 
     pub fn new(location: &str) -> Self {
         IndexedDB{
-            index_root: index::File::Folder(Box::new([])),
+            index: index::Index::new(),
             location: String::from(location),
         }
     }

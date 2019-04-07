@@ -34,6 +34,9 @@ impl DBError {
     pub fn delete(cause: &str) -> Self {
         Self::new("delete", cause)
     }
+    pub fn index(cause: &str) -> Self {
+        Self::new("index", cause)
+    }
 }
 
 impl Error for DBError {}

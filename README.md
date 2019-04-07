@@ -3,9 +3,10 @@
 If you're benchmarking remember to compile your project with `--release` flag!
 
 ### Todo
- * Indexed database
- * Async caching?
+ * Improve caching performance (if possible)
+ * CachedIndexedDB
  * Documentation
+ * Upload crate
 
 ```rust
 use sfsdb::GenericDatabase;
@@ -19,7 +20,7 @@ pub struct TestData {
 }
 
 fn main() {
-    let mut db = sfsdb::new("db", Some(20), false);
+    let mut db = sfsdb::new("db");
     let u = TestData{first_entry: "kjehfakwljhfwa eklfhawe fkwhaeflkawhfwaef".to_string(), second_entry: 48328414153};
 
     // Don't unwrap, remember to use proper error handling in actual applications

@@ -65,7 +65,7 @@ impl crate::database::cached::CachedDB {
                 continue;
             } else {
                 let mut path = PathBuf::new();
-                path.push(self.location());
+                path.push(&self.location);
                 path.push(*k);
                 read(path)
                     .map_err(|e| eprintln!("sfsdb: File and Cache mismatch ({}): {}", *k, e))

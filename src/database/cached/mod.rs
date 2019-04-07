@@ -1,5 +1,6 @@
 use crate::filesystem::{fs_load, fs_save, fs_delete};
 use crate::error::DBError;
+use crate::GenericDatabase;
 
 use serde::{Serialize, Deserialize};
 use bincode::{deserialize};
@@ -19,21 +20,21 @@ pub struct CachedDB {
     cache: HashMap<String, Vec<u8>>, // Key -> bincode
 }
 
-impl CachedDB {
-    pub fn location(&self) -> &str {
+impl GenericDatabase for CachedDB {
+    fn location(&self) -> &str {
         &self.location
     }
-    pub fn exists(&self, identifier: &str) -> bool {
+    fn exists(&self, key: &str) -> bool {
         if self.cache_limit.is_some() {
             let mut p = PathBuf::new();
-            p.push(self.location());
-            p.push(identifier);
+            p.push(&self.location);
+            p.push(key);
             p.exists()
         } else {
-            self.cache.contains_key(identifier)
+            self.cache.contains_key(key)
         }
     }
-    pub fn save<T>(&mut self, key: &str, value: T) -> Result<(), DBError> 
+    fn save<T>(&mut self, key: &str, value: T) -> Result<(), DBError> 
         where for<'de> T: Deserialize<'de> + Serialize + Clone 
     {
         let mut path = PathBuf::new();
@@ -45,7 +46,7 @@ impl CachedDB {
         self.cache_count.add_tracker(k);
         Ok(())
     }
-    pub fn load<T>(&mut self, key: &str) -> Result<T, DBError> 
+    fn load<T>(&mut self, key: &str) -> Result<T, DBError> 
         where for<'de> T: Deserialize<'de> + Serialize + Clone 
     {
         // Perform resync once ever X amount of loads
@@ -61,17 +62,20 @@ impl CachedDB {
                 path.push(&self.location());
                 path.push(key);
                 match fs_load::<T>(&path) {
-                    Ok(v) => Ok(v),
+                    Ok(v) => Ok(v)
+                    ,
                     Err(e) => Err(e),
                 }
             }
             Some(v) => Ok(match deserialize(v) {
                 Ok(v) => v,
-                Err(e) => return Err(DBError::load(&format!("Unable to decode {} ({})", key, e))),
+                Err(e) => {
+                    return Err(DBError::load(&format!("Unable to decode {} ({})", key, e)))
+                }
             }),
         }
     }
-    pub fn delete(&mut self, key: &str) {
+    fn delete(&mut self, key: &str) {
         self.cache.remove(key);
         self.cache_count.del_tracker(key);
 
@@ -80,7 +84,9 @@ impl CachedDB {
         path.push(key);
         fs_delete(&path);
     }
+}
 
+impl CachedDB {
     pub fn new(location: &str, cache_limit: Option<usize>) -> Self {
         CachedDB {
             location: String::from(location),
