@@ -1,10 +1,10 @@
-use crate::filesystem::{fs_load, fs_save, fs_delete};
-use serde::{Serialize, Deserialize};
+use crate::filesystem::{fs_delete, fs_load, fs_save};
+use serde::{Deserialize, Serialize};
 
-use std::fs;
-use std::path::{PathBuf, Path};
 use crate::error::DBError;
 use crate::GenericDatabase;
+use std::fs;
+use std::path::{Path, PathBuf};
 
 pub struct SimpleDB {
     location: String,
@@ -20,14 +20,17 @@ impl GenericDatabase for SimpleDB {
         p.push(identifier);
         p.exists()
     }
-    fn save<T: Serialize>(&mut self, key: &str, value: T) -> Result<(), DBError> {
+    fn save<T: Serialize>(&mut self, key: &str, value: &T) -> Result<(), DBError> {
         let mut path = PathBuf::new();
         path.push(&self.location());
         path.push(key);
         fs_save(&path, &value)?;
         Ok(())
     }
-    fn load<T>(&mut self, key: &str) -> Result<T, DBError> where for<'de> T: Deserialize<'de> {
+    fn load<T>(&mut self, key: &str) -> Result<T, DBError>
+    where
+        for<'de> T: Deserialize<'de>,
+    {
         let mut path = PathBuf::new();
         path.push(&self.location());
         path.push(key);
@@ -49,7 +52,7 @@ impl SimpleDB {
                 panic!("sfsdb: Could not create database at {}", location)
             }
         }
-        SimpleDB{
+        SimpleDB {
             location: String::from(location),
         }
     }

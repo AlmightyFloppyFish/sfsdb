@@ -1,10 +1,10 @@
-use crate::filesystem::{fs_load, fs_save, fs_delete};
 use crate::error::DBError;
+use crate::filesystem::{fs_delete, fs_load, fs_save};
 use crate::GenericDatabase;
 
-use serde::{Serialize, Deserialize};
-use bincode::{deserialize};
+use bincode::deserialize;
 use hashbrown::HashMap;
+use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
 
@@ -34,8 +34,9 @@ impl GenericDatabase for CachedDB {
             self.cache.contains_key(key)
         }
     }
-    fn save<T>(&mut self, key: &str, value: T) -> Result<(), DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone 
+    fn save<T>(&mut self, key: &str, value: &T) -> Result<(), DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         let mut path = PathBuf::new();
         path.push(&self.location());
@@ -46,8 +47,9 @@ impl GenericDatabase for CachedDB {
         self.cache_count.add_tracker(k);
         Ok(())
     }
-    fn load<T>(&mut self, key: &str) -> Result<T, DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone 
+    fn load<T>(&mut self, key: &str) -> Result<T, DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         // Perform resync once ever X amount of loads
         if self.cache_timer > CACHE_RESYNC_EVERY {
@@ -62,16 +64,13 @@ impl GenericDatabase for CachedDB {
                 path.push(&self.location());
                 path.push(key);
                 match fs_load::<T>(&path) {
-                    Ok(v) => Ok(v)
-                    ,
+                    Ok(v) => Ok(v),
                     Err(e) => Err(e),
                 }
             }
             Some(v) => Ok(match deserialize(v) {
                 Ok(v) => v,
-                Err(e) => {
-                    return Err(DBError::load(&format!("Unable to decode {} ({})", key, e)))
-                }
+                Err(e) => return Err(DBError::load(&format!("Unable to decode {} ({})", key, e))),
             }),
         }
     }

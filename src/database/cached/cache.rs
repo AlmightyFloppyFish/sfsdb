@@ -1,6 +1,6 @@
 use hashbrown::HashMap;
-use std::path::PathBuf;
 use std::fs::read;
+use std::path::PathBuf;
 
 pub struct CacheCount(HashMap<String, u64>);
 
@@ -9,10 +9,14 @@ pub struct CacheCount(HashMap<String, u64>);
 impl CacheCount {
     pub fn increase_use(&mut self, identifier: &str) -> bool {
         match self.0.get_mut(identifier) {
-            Some(c) => 
-                if *c != std::u64::MAX { *c += 1 } 
-                else { self.reset() },
-            None => return false
+            Some(c) => {
+                if *c != std::u64::MAX {
+                    *c += 1
+                } else {
+                    self.reset()
+                }
+            }
+            None => return false,
         }
         true
     }
@@ -57,9 +61,11 @@ impl crate::database::cached::CachedDB {
         for (c, (k, _)) in pairs.iter().enumerate() {
             // Stop conditionals
             if c > i {
-                break
+                break;
             } else if self.cache_limit.is_some() {
-                if c >= self.cache_limit.unwrap() { break };
+                if c >= self.cache_limit.unwrap() {
+                    break;
+                };
             }
 
             should_exist.insert(k.clone(), ());

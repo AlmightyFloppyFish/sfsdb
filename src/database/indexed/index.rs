@@ -12,9 +12,7 @@ pub struct Index<T>(pub HashMap<String, T>);
 
 impl<T> Index<T> {
     pub fn new() -> Self {
-        Index(
-            HashMap::new(),
-        )
+        Index(HashMap::new())
     }
 
     pub fn get(&self, key: &str) -> Option<&T> {
@@ -31,8 +29,9 @@ impl<T> Index<T> {
         self.0.insert(key.to_owned(), index);
     }
 
-    pub fn update<F>(&mut self, key: &str, mut apply: F) -> Result<(), DBError> 
-        where F: FnMut(&mut T)
+    pub fn update<F>(&mut self, key: &str, mut apply: F) -> Result<(), DBError>
+    where
+        F: FnMut(&mut T),
     {
         match self.0.get_mut(key) {
             Some(mut index) => Ok(apply(&mut index)),

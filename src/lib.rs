@@ -1,22 +1,24 @@
-use serde::{Serialize, Deserialize};
+use serde::{Deserialize, Serialize};
 
-mod error;
 pub mod database;
+mod error;
 mod filesystem;
 
 #[cfg(test)]
 mod tests;
 
-use database::{simple::SimpleDB, cached::CachedDB, indexed::IndexedDB};
 use crate::error::DBError;
+use database::{cached::CachedDB, indexed::IndexedDB, simple::SimpleDB};
 
 pub trait GenericDatabase {
     fn location(&self) -> &str;
     fn exists(&self, name: &str) -> bool;
-    fn save<T>(&mut self, key: &str, data: T) -> Result<(), DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone;
-    fn load<T>(&mut self, identifier: &str) -> Result<T, DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone;
+    fn save<T>(&mut self, key: &str, data: &T) -> Result<(), DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone;
+    fn load<T>(&mut self, identifier: &str) -> Result<T, DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone;
     fn delete(&mut self, identifier: &str);
 }
 

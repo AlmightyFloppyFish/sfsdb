@@ -1,9 +1,9 @@
 mod index;
 
-use serde::{Serialize, Deserialize};
 use crate::error::DBError;
-use crate::GenericDatabase;
 use crate::filesystem::*;
+use crate::GenericDatabase;
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
 pub struct IndexedDB<T> {
@@ -11,7 +11,7 @@ pub struct IndexedDB<T> {
     location: String,
 }
 
-impl <I>GenericDatabase for IndexedDB<I> {
+impl<I> GenericDatabase for IndexedDB<I> {
     fn location(&self) -> &str {
         &self.location
     }
@@ -21,8 +21,9 @@ impl <I>GenericDatabase for IndexedDB<I> {
         p.push(key);
         p.exists()
     }
-    fn save<T>(&mut self, key: &str, value: T) -> Result<(), DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone
+    fn save<T>(&mut self, key: &str, value: &T) -> Result<(), DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         let mut path = PathBuf::new();
         path.push(&self.location);
@@ -30,7 +31,10 @@ impl <I>GenericDatabase for IndexedDB<I> {
         fs_save(&path, &value)?;
         Ok(())
     }
-    fn load<T>(&mut self, key: &str) -> Result<T, DBError> where for<'de> T: Deserialize<'de> {
+    fn load<T>(&mut self, key: &str) -> Result<T, DBError>
+    where
+        for<'de> T: Deserialize<'de>,
+    {
         let mut path = PathBuf::new();
         path.push(&self.location());
         path.push(key);
@@ -46,11 +50,12 @@ impl <I>GenericDatabase for IndexedDB<I> {
     }
 }
 
-impl <I>IndexedDB<I> {
-    pub fn save_with_index<T>(&mut self, key: &str, data: T, index: I) -> Result<(), DBError> 
-        where for<'de> T: Deserialize<'de> + Serialize + Clone
+impl<I> IndexedDB<I> {
+    pub fn save_with_index<T>(&mut self, key: &str, data: T, index: I) -> Result<(), DBError>
+    where
+        for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
-        self.save(key, data)?;
+        self.save(key, &data)?;
         Ok(self.index.attach(key, index))
     }
 
@@ -66,23 +71,23 @@ impl <I>IndexedDB<I> {
         self.index.delete(key);
     }
 
-    pub fn search_with<F>(&self, apply: F) -> Vec<String> 
-        where F: Fn(&I) -> bool 
+    pub fn search_with<F>(&self, apply: F) -> Vec<String>
+    where
+        F: Fn(&I) -> bool,
     {
         let mut results = Vec::new();
         for (k, v) in self.index.0.iter() {
             if apply(&v) {
                 results.push((*k).clone());
             };
-        };
-        return results
+        }
+        return results;
     }
 
     pub fn new(location: &str) -> Self {
-        IndexedDB{
+        IndexedDB {
             index: index::Index::new(),
             location: String::from(location),
         }
     }
 }
-

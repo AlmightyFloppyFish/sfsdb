@@ -1,13 +1,14 @@
 use crate::GenericDatabase;
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
 
 #[test]
 fn integrity() {
     let mut db = crate::new("test_db", None, false);
-    db.save::<String>("some_key", "some_data".to_owned()).unwrap();
+    db.save::<String>("some_key", "some_data".to_owned())
+        .unwrap();
 
     let loaded = db.load::<String>("some_key").unwrap();
-    
+
     assert_eq!(loaded, "some_data".to_owned());
 }
 
@@ -17,7 +18,7 @@ fn cache() {
     let u: u64 = 41423141;
 
     let t = SystemTime::now();
-    for i in  0..200 {
+    for i in 0..200 {
         db.save(&i.to_string(), u.clone()).unwrap();
     }
     println!("200 unique saves took: {:?}", t.elapsed().unwrap());
@@ -27,8 +28,10 @@ fn cache() {
     let t = SystemTime::now();
     spamload::<u64>(40, "3", &mut db);
     let cached = t.elapsed().unwrap();
-    println!("Loading \"3\" 40 times, (should be cached), took {:?}", cached);
-
+    println!(
+        "Loading \"3\" 40 times, (should be cached), took {:?}",
+        cached
+    );
 
     let t = SystemTime::now();
     spamload::<u64>(40, "120", &mut db);
@@ -40,9 +43,10 @@ fn cache() {
 }
 
 fn spamload<T>(times: usize, key: &str, db: &mut crate::Database)
-    where T: for<'de> serde::Deserialize<'de> + serde::Serialize + Clone
+where
+    T: for<'de> serde::Deserialize<'de> + serde::Serialize + Clone,
 {
     for i in 0..times {
         let a = db.load::<T>(key).map_err(|e| eprintln!("{}", e)).unwrap();
-    };
+    }
 }

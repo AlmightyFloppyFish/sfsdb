@@ -1,4 +1,4 @@
-use chrono::{Local, DateTime};
+use chrono::{DateTime, Local};
 use std::error::Error;
 use std::fmt;
 
@@ -11,9 +11,12 @@ pub struct DBError {
 
 impl fmt::Display for DBError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(
-            &format!("[{}] sfsdb {} error: {}", self.when.time().format("%H:%M:%S"), self.kind, self.cause)
-        )
+        f.write_str(&format!(
+            "[{}] sfsdb {} error: {}",
+            self.when.time().format("%H:%M:%S"),
+            self.kind,
+            self.cause
+        ))
     }
 }
 

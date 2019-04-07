@@ -7,8 +7,18 @@ pub struct TestData {
     pub second_entry: u64,
 }
 
+/*
+ * For cached database you really don't have to do anything differently.
+ * It'll automatically cache the top Some(N) most used objects and pick
+ * the cached version instead of it exists when using db.load().
+ *
+ * It'll resync which objects are cached every 100th load, but you can also
+ * force a resync manually throught the db.resync() method
+ */
+
 fn main() {
-    let mut db = sfsdb::new("db");
+    // Second parameter is maximum amount of cached objects
+    let mut db = sfsdb::new_cached("db", Some(20));
 
     let u = TestData {
         first_entry: "some string".to_string(),
