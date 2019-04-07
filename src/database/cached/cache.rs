@@ -39,6 +39,8 @@ impl CacheCount {
 }
 
 impl crate::database::cached::CachedDB {
+    // Manually perform a resync of the cache. This will cache the top N most used keys.
+    // This is already run automatically on a schedule.
     pub fn resync(&mut self) {
         let mut pairs = Vec::with_capacity(self.cache_count.0.len());
         let mut i: usize = 0;
