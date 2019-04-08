@@ -26,7 +26,7 @@ fn main() {
 
     db.save_with_index(
         "justin",
-        User {
+        &User {
             name: String::from("Justin Evens"),
             age: 22,
         },
@@ -38,7 +38,7 @@ fn main() {
     .unwrap();
     db.save_with_index(
         "keth",
-        User {
+        &User {
             name: String::from("Keth Stone"),
             age: 31,
         },
