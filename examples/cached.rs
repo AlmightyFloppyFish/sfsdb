@@ -13,7 +13,7 @@ pub struct User {
  *
  * For cached database you really don't have to do anything differently.
  * It'll automatically cache the top Some(N) most used objects and pick
- * the cached version instead of it, if it exists when using db.load().
+ * the cached version instead, if it exists when using db.load().
  *
  * It'll resync which objects are cached every 100th load, but you can also
  * force a resync manually throught the db.resync() method
