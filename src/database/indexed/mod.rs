@@ -51,11 +51,11 @@ impl<I> GenericDatabase for IndexedDB<I> {
 }
 
 impl<I> IndexedDB<I> {
-    pub fn save_with_index<T>(&mut self, key: &str, data: T, index: I) -> Result<(), DBError>
+    pub fn save_with_index<T>(&mut self, key: &str, data: &T, index: I) -> Result<(), DBError>
     where
         for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
-        self.save(key, &data)?;
+        self.save(key, data)?;
         Ok(self.index.attach(key, index))
     }
 

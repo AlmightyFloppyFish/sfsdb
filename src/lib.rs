@@ -22,14 +22,21 @@ pub trait GenericDatabase {
     fn delete(&mut self, identifier: &str);
 }
 
+fn init(dir: &str) {
+    std::fs::create_dir_all(dir).ok();
+}
+
 pub fn new(location: &str) -> SimpleDB {
+    init(location);
     SimpleDB::new(location)
 }
 
 pub fn new_cached(location: &str, cache: Option<usize>) -> CachedDB {
+    init(location);
     CachedDB::new(location, cache)
 }
 
 pub fn new_indexed<I>(location: &str) -> IndexedDB<I> {
+    init(location);
     IndexedDB::new(location)
 }

@@ -1,16 +1,17 @@
-use sfsdb::GenericDatabase;
-use serde::{Serialize, Deserialize};
-use std::time::SystemTime;
+use serde::{Deserialize, Serialize};
+use std::ops::Sub;
+use std::time::{Duration, SystemTime};
 
 #[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
-pub struct TestData {
-    pub first_entry: String,
-    pub second_entry: u64,
+pub struct User {
+    pub name: String,
+    pub age: u64,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MyIndex {
     pub categories: Vec<String>,
-    pub date: SystemTime,
+    pub starting_date: SystemTime,
 }
 
 /*
@@ -21,17 +22,40 @@ pub struct MyIndex {
 
 fn main() {
     // Second parameter is maximum amount of cached objects
-    let mut db = sfsdb::new_cached("db", Some(20));
+    let mut db = sfsdb::new_indexed("db");
 
-    let u = TestData {
-        first_entry: "some string".to_string(),
-        second_entry: 1234,
-    };
+    db.save_with_index(
+        "justin",
+        User {
+            name: String::from("Justin Evens"),
+            age: 22,
+        },
+        MyIndex {
+            categories: vec!["employee".into(), "programmers".into()],
+            starting_date: SystemTime::now(),
+        },
+    )
+    .unwrap();
+    db.save_with_index(
+        "keth",
+        User {
+            name: String::from("Keth Stone"),
+            age: 31,
+        },
+        MyIndex {
+            categories: vec!["employee".into(), "support team".into()],
+            starting_date: SystemTime::now().sub(Duration::from_secs(400)),
+        },
+    )
+    .unwrap();
 
-    db.save_with_index("some key", &u, MyIndex {}).unwrap();
-    db.save_with_index("other key", &u).unwrap();
+    // Of course this is only very basic queries but, since it's a closure you have the
+    // power of the entire Rust programming language at your hands.
 
-    assert_eq!(db.exists("some key"), true);
-    assert_eq!(u, db.load::<TestData>("some key").unwrap());
-    assert_eq!(u, db.load::<TestData>("other key").unwrap());
+    let programmers = db.search_with(|index| index.categories.contains(&"programmers".to_owned()));
+    println!("All programmers: {:?}", programmers);
+
+    let recent =
+        db.search_with(|index| index.starting_date.elapsed().unwrap() > Duration::from_secs(300));
+    println!("These have existed for more than 300 seconds: {:?}", recent);
 }
