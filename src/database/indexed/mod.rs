@@ -4,14 +4,24 @@ use crate::error::DBError;
 use crate::filesystem::*;
 use crate::GenericDatabase;
 use serde::{Deserialize, Serialize};
+use std::fs;
 use std::path::PathBuf;
 
-pub struct IndexedDB<T> {
+// Index will always be loaded in ram
+// but i might want to add a flag to make
+// it purely disk-saved
+pub struct IndexedDB<T>
+where
+    for<'de> T: Deserialize<'de> + Serialize + Clone,
+{
     index: index::Index<T>,
     location: String,
 }
 
-impl<I> GenericDatabase for IndexedDB<I> {
+impl<I> GenericDatabase for IndexedDB<I>
+where
+    for<'de> I: Deserialize<'de> + Serialize + Clone,
+{
     fn location(&self) -> &str {
         &self.location
     }
@@ -50,24 +60,38 @@ impl<I> GenericDatabase for IndexedDB<I> {
     }
 }
 
-impl<I> IndexedDB<I> {
+impl<I> IndexedDB<I>
+where
+    for<'de> I: Deserialize<'de> + Serialize + Clone,
+{
     pub fn save_with_index<T>(&mut self, key: &str, data: &T, index: I) -> Result<(), DBError>
     where
         for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         self.save(key, data)?;
+        index::Index::disk_save(&index, &self.location, key)?;
         Ok(self.index.attach(key, index))
     }
 
-    pub fn add_index(&mut self, key: &str, index: I) {
-        self.index.attach(key, index)
+    pub fn add_index(&mut self, key: &str, index: I) -> Result<(), DBError> {
+        index::Index::disk_save(&index, &self.location, key)?;
+        Ok(self.index.attach(key, index))
     }
 
     pub fn get_index(&self, key: &str) -> Option<&I> {
         self.index.get(key)
     }
 
-    pub fn del_index(&mut self, key: &str) {
+    pub fn edit_index<F>(&mut self, key: &str, with: F) -> Result<(), DBError>
+    where
+        F: FnMut(I) -> I,
+    {
+        self.index.update::<F, I>(key, &self.location, with)?;
+        Ok(())
+    }
+
+    pub fn delete_index(&mut self, key: &str) {
+        index::disk_delete(&self.location, key);
         self.index.delete(key);
     }
 
@@ -85,8 +109,32 @@ impl<I> IndexedDB<I> {
     }
 
     pub fn new(location: &str) -> Self {
+        // Load existing fs index
+        let mut index = index::Index::new();
+        let mut index_path = std::path::PathBuf::new();
+        index_path.push(location);
+        index_path.push("__INDEX__");
+
+        if !index_path.exists() {
+            fs::create_dir_all(&index_path).unwrap();
+        } else {
+            // List all in directory
+            // Index::disk_load(&self.location, K) for each
+            for dir in fs::read_dir(index_path).unwrap() {
+                let p = dir.unwrap();
+                let v = match fs_load(&p.path()) {
+                    Ok(v) => v,
+                    Err(_) => {
+                        println!("Skipping invalid index {:?}", &p.path());
+                        continue;
+                    }
+                };
+                index.attach(p.file_name().to_str().unwrap(), v)
+            }
+        }
+
         IndexedDB {
-            index: index::Index::new(),
+            index: index,
             location: String::from(location),
         }
     }

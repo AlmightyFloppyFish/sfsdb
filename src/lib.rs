@@ -4,9 +4,6 @@ pub mod database;
 mod error;
 mod filesystem;
 
-#[cfg(test)]
-mod tests;
-
 use crate::error::DBError;
 use database::{cached::CachedDB, indexed::IndexedDB, simple::SimpleDB};
 
@@ -36,7 +33,10 @@ pub fn new_cached(location: &str, cache: Option<usize>) -> CachedDB {
     CachedDB::new(location, cache)
 }
 
-pub fn new_indexed<I>(location: &str) -> IndexedDB<I> {
+pub fn new_indexed<I>(location: &str) -> IndexedDB<I>
+where
+    for<'de> I: Deserialize<'de> + Serialize + Clone,
+{
     init(location);
     IndexedDB::new(location)
 }
