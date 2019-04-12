@@ -1,8 +1,10 @@
 mod index;
 
+use crate::cache;
 use crate::error::DBError;
 use crate::filesystem::*;
 use crate::GenericDatabase;
+use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -14,8 +16,12 @@ pub struct IndexedDB<T>
 where
     for<'de> T: Deserialize<'de> + Serialize + Clone,
 {
-    index: index::Index<T>,
     location: String,
+    index: index::Index<T>,
+    cache_limit: Option<usize>,
+    cache_timer: u8,
+    cache_count: cache::CacheCount,
+    cache: HashMap<String, Vec<u8>>, // Key -> bincode
 }
 
 impl<I> GenericDatabase for IndexedDB<I>
@@ -108,7 +114,7 @@ where
         return results;
     }
 
-    pub fn new(location: &str) -> Self {
+    pub fn new(location: &str, cache: Option<usize>) -> Self {
         // Load existing fs index
         let mut index = index::Index::new();
         let mut index_path = std::path::PathBuf::new();
@@ -135,6 +141,10 @@ where
 
         IndexedDB {
             index: index,
+            cache_limit: cache,
+            cache_timer: 0,
+            cache_count: cache::CacheCount::new(),
+            cache: HashMap::new(),
             location: String::from(location),
         }
     }

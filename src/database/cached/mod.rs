@@ -1,14 +1,14 @@
+use crate::cache;
 use crate::error::DBError;
 use crate::filesystem::{fs_delete, fs_load, fs_save};
 use crate::GenericDatabase;
+use std::fs::read;
 
 use bincode::deserialize;
 use hashbrown::HashMap;
 use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
-
-mod cache;
 
 const CACHE_RESYNC_EVERY: u8 = 100;
 
@@ -86,6 +86,56 @@ impl GenericDatabase for CachedDB {
 }
 
 impl CachedDB {
+    // Manually perform a resync of the cache. This will cache the top N most used keys.
+    // This is already run automatically on a schedule.
+    pub fn resync(&mut self) {
+        let mut pairs = Vec::with_capacity(self.cache_count.0.len());
+        let mut i: usize = 0;
+        for (key, value) in &self.cache_count.0 {
+            pairs.push((key, value));
+            i += 1;
+        }
+
+        // Sort by one of tuple
+        pairs.sort_by(|(_, a_v), (_, b_v)| b_v.cmp(a_v));
+
+        let mut should_exist: HashMap<&str, ()> = HashMap::new();
+        // Iter of those that are supposed to be in new cache
+        for (c, (k, _)) in pairs.iter().enumerate() {
+            // Stop conditionals
+            if c > i {
+                break;
+            } else if self.cache_limit.is_some() {
+                if c >= self.cache_limit.unwrap() {
+                    break;
+                };
+            }
+
+            should_exist.insert(k.clone(), ());
+            let value_from_fs = if self.cache.contains_key(*k) {
+                continue;
+            } else {
+                let mut path = PathBuf::new();
+                path.push(&self.location);
+                path.push(*k);
+                read(path)
+                    .map_err(|e| eprintln!("sfsdb: File and Cache mismatch ({}): {}", *k, e))
+                    .unwrap_or_default()
+            };
+            self.cache.insert(k.clone().to_owned(), value_from_fs);
+        }
+
+        // Iter over keys and check if key is not in pairs then delete
+        let mut in_cache: Vec<String> = Vec::new();
+        for key in self.cache.keys() {
+            in_cache.push(key.clone());
+        }
+        for key in in_cache {
+            if !should_exist.contains_key(key.as_str()) {
+                self.cache.remove(&key);
+            }
+        }
+    }
     pub fn new(location: &str, cache_limit: Option<usize>) -> Self {
         CachedDB {
             location: String::from(location),

@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+pub(crate) mod cache;
 pub mod database;
 mod error;
 mod filesystem;
@@ -33,10 +34,10 @@ pub fn new_cached(location: &str, cache: Option<usize>) -> CachedDB {
     CachedDB::new(location, cache)
 }
 
-pub fn new_indexed<I>(location: &str) -> IndexedDB<I>
+pub fn new_indexed<I>(location: &str, cache: Option<usize>) -> IndexedDB<I>
 where
     for<'de> I: Deserialize<'de> + Serialize + Clone,
 {
     init(location);
-    IndexedDB::new(location)
+    IndexedDB::new(location, cache)
 }
