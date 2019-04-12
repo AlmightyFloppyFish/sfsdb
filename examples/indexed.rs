@@ -52,6 +52,9 @@ fn main() {
     // Of course this is only very basic queries but, since it's a closure you have the
     // power of the entire Rust programming language at your hands.
 
+    println!("Index of \"justin\": {:?}", db.get_index("justin").unwrap());
+    println!("Index of \"keth\": {:?}", db.get_index("keth").unwrap());
+
     let programmers = db.search_with(|index| index.categories.contains(&"programmers".to_owned()));
     println!("All programmers: {:?}", programmers);
 
