@@ -9,8 +9,14 @@ pub fn fs_load<T>(p: &Path) -> Result<T, DBError>
 where
     for<'de> T: Deserialize<'de>,
 {
-    let f = File::open(p).unwrap(); // TODO
-    Ok(bincode::deserialize_from(f).unwrap()) // TODO
+    let f = match File::open(p) {
+        Ok(f) => f,
+        Err(e) => return Err(DBError::load(&format!("{}", e))),
+    };
+    match bincode::deserialize_from(f) {
+        Ok(d) => Ok(d),
+        Err(e) => Err(DBError::load(&format!("{}", e))),
+    }
 }
 
 pub fn fs_save<'e, T: Serialize>(p: &Path, data: &T) -> Result<(), DBError> {
@@ -29,10 +35,12 @@ pub fn fs_save<'e, T: Serialize>(p: &Path, data: &T) -> Result<(), DBError> {
 }
 
 pub fn fs_delete(p: &Path) {
-    std::fs::remove_file(p).map_err(|_| {
-        eprintln!(
-            "{}",
-            DBError::delete(&format!("Could not delete {}", p.display()))
-        )
-    });
+    std::fs::remove_file(p)
+        .map_err(|_| {
+            eprintln!(
+                "{}",
+                DBError::delete(&format!("Could not delete {}", p.display()))
+            )
+        })
+        .ok();
 }
