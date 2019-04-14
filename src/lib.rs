@@ -29,15 +29,15 @@ pub fn new(location: &str) -> SimpleDB {
     SimpleDB::new(location)
 }
 
-pub fn new_cached(location: &str, cache: Option<usize>) -> CachedDB {
+pub fn new_cached(location: &str, cache: Option<usize>, resync_every: u16) -> CachedDB {
     init(location);
-    CachedDB::new(location, cache)
+    CachedDB::new(location, cache, resync_every)
 }
 
-pub fn new_indexed<I>(location: &str, cache: Option<usize>) -> IndexedDB<I>
+pub fn new_indexed<I>(location: &str, cache: Option<usize>, resync_every: u16) -> IndexedDB<I>
 where
     for<'de> I: Deserialize<'de> + Serialize + Clone,
 {
     init(location);
-    IndexedDB::new(location, cache)
+    IndexedDB::new(location, cache, resync_every)
 }
