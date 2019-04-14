@@ -177,12 +177,15 @@ where
         for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         self.save(key, data)?;
-        index::Index::disk_save(&index, &self.location, key)?;
+        self.index.disk_save(&index, key)?;
         Ok(self.index.attach(key, index))
     }
 
     pub fn add_index(&mut self, key: &str, index: I) -> Result<(), DBError> {
-        index::Index::disk_save(&index, &self.location, key)?;
+        if key == "" {
+            return Err(DBError::index("Empty key"));
+        }
+        self.index.disk_save(&index, key)?;
         Ok(self.index.attach(key, index))
     }
 
@@ -194,12 +197,15 @@ where
     where
         F: FnMut(I) -> I,
     {
-        self.index.update::<F, I>(key, &self.location, with)?;
+        self.index.update::<F, I>(key, with)?;
         Ok(())
     }
 
     pub fn delete_index(&mut self, key: &str) {
-        index::disk_delete(&self.location, key);
+        if key == "" {
+            return;
+        }
+        self.index.disk_delete(key);
         self.index.delete(key);
     }
 
@@ -208,7 +214,7 @@ where
         F: Fn(&I) -> bool,
     {
         let mut results = Vec::new();
-        for (k, v) in self.index.0.iter() {
+        for (k, v) in self.index.mem.iter() {
             if apply(&v) {
                 results.push((*k).clone());
             };
@@ -218,17 +224,14 @@ where
 
     pub fn new(location: &str, cache_limit: Option<usize>, resync_every: u16) -> Self {
         // Load existing fs index
-        let mut index = index::Index::new();
-        let mut index_path = std::path::PathBuf::new();
-        index_path.push(location);
-        index_path.push("__INDEX__");
+        let mut index = index::Index::new(location);
 
-        if !index_path.exists() {
-            fs::create_dir_all(&index_path).unwrap();
+        if !index.location.exists() {
+            fs::create_dir_all(&index.location).unwrap();
         } else {
             // List all in directory
             // Index::disk_load(&self.location, K) for each
-            for dir in fs::read_dir(index_path).unwrap() {
+            for dir in fs::read_dir(&index.location).unwrap() {
                 let p = dir.unwrap();
                 let v = match fs_load(&p.path()) {
                     Ok(v) => v,
