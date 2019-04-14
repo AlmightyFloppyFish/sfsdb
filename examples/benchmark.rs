@@ -29,15 +29,11 @@ fn main() {
         name: "Justin Evans".to_string(),
         age: 22,
     };
-    let keth = User {
-        name: "Keth Stone".to_string(),
-        age: 31,
-    };
 
     // Creating in an uncached database
     bench(&mut db_uncached, |db| {
         for i in 0..1000 {
-            db.save(&i.to_string(), &justin);
+            db.save(&i.to_string(), &justin).unwrap();
         }
         print!("\n(Simple) Saving justin 1000 times took: ");
     });
@@ -54,7 +50,7 @@ fn main() {
     // Creating in an cached database
     bench(&mut db_cached, |db| {
         for i in 0..1000 {
-            db.save(&i.to_string(), &justin);
+            db.save(&i.to_string(), &justin).unwrap();
         }
         print!("\n(Cached) Saving justin 1000 times took: ");
     });
@@ -80,7 +76,8 @@ fn main() {
                     login_attempts: i,
                     logged_in: (i % 2 == 0),
                 },
-            ).unwrap();
+            )
+            .unwrap();
         }
         print!("\n(Indexed + Cached) Saving justin 1000 times took: ");
     });
