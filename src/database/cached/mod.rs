@@ -1,4 +1,4 @@
-use crate::cache;
+use crate::cache::Cache;
 use crate::error::DBError;
 use crate::filesystem::{fs_delete, fs_load, fs_save};
 use crate::GenericDatabase;
@@ -10,14 +10,9 @@ use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
 
-const CACHE_RESYNC_EVERY: u8 = 100;
-
 pub struct CachedDB {
     location: String,
-    cache_limit: Option<usize>,
-    cache_timer: u8,
-    cache_count: cache::CacheCount,
-    cache: HashMap<String, Vec<u8>>, // Key -> bincode
+    cache: Cache,
 }
 
 impl GenericDatabase for CachedDB {
@@ -25,13 +20,13 @@ impl GenericDatabase for CachedDB {
         &self.location
     }
     fn exists(&self, key: &str) -> bool {
-        if self.cache_limit.is_some() {
+        if self.cache.limit.is_some() {
             let mut p = PathBuf::new();
             p.push(&self.location);
             p.push(key);
             p.exists()
         } else {
-            self.cache.contains_key(key)
+            self.cache.content.contains_key(key)
         }
     }
     fn save<T>(&mut self, key: &str, value: &T) -> Result<(), DBError>
@@ -44,7 +39,28 @@ impl GenericDatabase for CachedDB {
         fs_save(&path, &value)?;
 
         let k = key.to_owned();
-        self.cache_count.add_tracker(k);
+
+        // Keep track of usage for syncing
+        self.cache.add_tracker(k.clone());
+
+        // Put everything on the cache untill it's full. And then start to resync from there
+        if !self.cache.full {
+            match self.cache.limit {
+                Some(limit) => {
+                    if self.cache.count.len() == limit {
+                        self.cache.full = true
+                    }
+                }
+                None => (),
+            }
+            self.cache.content.insert(
+                k.clone(),
+                match bincode::serialize(value) {
+                    Ok(v) => v,
+                    Err(_) => return Err(DBError::save(&format!("Unable to serialize {}", k))),
+                },
+            );
+        }
         Ok(())
     }
     fn load<T>(&mut self, key: &str) -> Result<T, DBError>
@@ -52,13 +68,16 @@ impl GenericDatabase for CachedDB {
         for<'de> T: Deserialize<'de> + Serialize + Clone,
     {
         // Perform resync once ever X amount of loads
-        if self.cache_timer > CACHE_RESYNC_EVERY {
-            self.cache_timer = 0;
+        if self.cache.should_resync() {
+            self.cache.timer = 0;
+            // Prevent possible saving over index
+            self.cache.full = true;
+
             self.resync();
         }
-        self.cache_timer += 1;
-        self.cache_count.increase_use(key);
-        match self.cache.get(key) {
+        self.cache.timer += 1;
+        self.cache.increase_use(key);
+        match self.cache.content.get(key) {
             None => {
                 let mut path = PathBuf::new();
                 path.push(&self.location());
@@ -75,8 +94,8 @@ impl GenericDatabase for CachedDB {
         }
     }
     fn delete(&mut self, key: &str) {
-        self.cache.remove(key);
-        self.cache_count.del_tracker(key);
+        self.cache.content.remove(key);
+        self.cache.del_tracker(key);
 
         let mut path = PathBuf::new();
         path.push(&self.location());
@@ -86,12 +105,12 @@ impl GenericDatabase for CachedDB {
 }
 
 impl CachedDB {
-    // Manually perform a resync of the cache. This will cache the top N most used keys.
-    // This is already run automatically on a schedule.
+    /// Manually perform a resync of the cache. This will cache the top N most used keys.
+    /// This is already run automatically on a schedule.
     pub fn resync(&mut self) {
-        let mut pairs = Vec::with_capacity(self.cache_count.0.len());
+        let mut pairs = Vec::with_capacity(self.cache.count.len());
         let mut i: usize = 0;
-        for (key, value) in &self.cache_count.0 {
+        for (key, value) in &self.cache.count {
             pairs.push((key, value));
             i += 1;
         }
@@ -105,14 +124,14 @@ impl CachedDB {
             // Stop conditionals
             if c > i {
                 break;
-            } else if self.cache_limit.is_some() {
-                if c >= self.cache_limit.unwrap() {
+            } else if self.cache.limit.is_some() {
+                if c >= self.cache.limit.unwrap() {
                     break;
                 };
             }
 
             should_exist.insert(k.clone(), ());
-            let value_from_fs = if self.cache.contains_key(*k) {
+            let value_from_fs = if self.cache.content.contains_key(*k) {
                 continue;
             } else {
                 let mut path = PathBuf::new();
@@ -122,27 +141,26 @@ impl CachedDB {
                     .map_err(|e| eprintln!("sfsdb: File and Cache mismatch ({}): {}", *k, e))
                     .unwrap_or_default()
             };
-            self.cache.insert(k.clone().to_owned(), value_from_fs);
+            self.cache
+                .content
+                .insert(k.clone().to_owned(), value_from_fs);
         }
 
         // Iter over keys and check if key is not in pairs then delete
         let mut in_cache: Vec<String> = Vec::new();
-        for key in self.cache.keys() {
+        for key in self.cache.content.keys() {
             in_cache.push(key.clone());
         }
         for key in in_cache {
             if !should_exist.contains_key(key.as_str()) {
-                self.cache.remove(&key);
+                self.cache.content.remove(&key);
             }
         }
     }
-    pub fn new(location: &str, cache_limit: Option<usize>) -> Self {
+    pub fn new(location: &str, cache_limit: Option<usize>, resync_every: u16) -> Self {
         CachedDB {
             location: String::from(location),
-            cache_limit: cache_limit,
-            cache_timer: 0,
-            cache_count: cache::CacheCount::new(),
-            cache: HashMap::new(),
+            cache: Cache::new(cache_limit, resync_every),
         }
     }
 }
