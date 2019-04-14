@@ -26,3 +26,23 @@ For now there's [the examples](https://github.com/AlmightyFloppyFish/sfsdb/tree/
 `$ cargo run --release --example cached`  
 `$ cargo run --release --example indexed`  
 `$ cargo run --release --example benchmark`  
+
+### Benchmarks
+Don't want to compile the benchmark example? Well here's my results
+```
+(Simple) Saving justin 1000 times took: 40.561932ms
+(Simple) Loading justin (with key '400') 1000 times took: 3.490118ms
+
+(Cached) Saving justin 1000 times took: 44.653967ms
+(Cached) Loading justin (with key '400') 1000 times took: 776.095µs
+
+(Indexed + Cached) Saving justin 1000 times took: 85.815535ms
+(Indexed + Cached) Loading justin (with key '400') 1000 times took: 662.987µs
+(Indexed + Cached) Querying for all logged-in users (which yielded 500 results) took: 44.308µs
+(Indexed + Cached) Querying for all locked-out users (which yielded 179 results) took: 24.893µs
+```
+```
+Intel i7-6600U (4) @ 3.400GHz
+SATA SSD
+16GB RAM
+```
