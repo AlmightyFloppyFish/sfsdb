@@ -15,7 +15,7 @@ The library is usable however won't be advertised until all checks under **Todo*
  - [ ] Improve support for saving HashMaps
  - [ ] Improve caching performance (if possible)
  - [x] Make indexes persist after restart (!important)
- - [ ] CachedIndexedDB
+ - [x] CachedIndexedDB
  - [ ] Documentation
  - [ ] Upload crate!
 
