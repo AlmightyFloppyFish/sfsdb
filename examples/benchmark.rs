@@ -42,7 +42,7 @@ fn main() {
         for _i in 0..1000 {
             // If I'd instead load i, so it loaded a different one every single time the
             // performance improvements of caching wouldn't show
-            let justin = db.load::<User>("400").unwrap();
+            let _justin = db.load::<User>("400").unwrap();
         }
         print!("(Simple) Loading justin (with key '400') 1000 times took: ");
     });

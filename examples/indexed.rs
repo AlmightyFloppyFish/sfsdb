@@ -22,7 +22,7 @@ pub struct MyIndex {
 
 fn main() {
     // Second parameter is maximum amount of cached objects
-    let mut db = sfsdb::new_indexed("db");
+    let mut db = sfsdb::new_indexed("db", Some(20), 100);
 
     db.save_with_index(
         "justin",
