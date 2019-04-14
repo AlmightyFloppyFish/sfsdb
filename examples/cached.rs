@@ -15,19 +15,20 @@ pub struct User {
  * It'll automatically cache the top Some(N) most used objects and pick
  * the cached version instead, if it exists when using db.load().
  *
- * It'll resync which objects are cached every 100th load, but you can also
- * force a resync manually throught the db.resync() method
+ * It'll resync which objects are cached every X load where X is
+ * the third parameter of new_cached(), but you can also force a
+ * resync manually through the db.resync() method.
  *
  * For performance comparison with an uncached database run the 'benchmark'
- * example. Just remember to use --release flag to cargo!
+ * example. Just remember to pass the --release flag to cargo!
  */
 
 fn main() {
     // Second parameter is maximum amount of cached objects
-    let mut db = sfsdb::new_cached("db", Some(20));
+    let mut db = sfsdb::new_cached("db", Some(20), 100);
 
     let u = User {
-        simon: "Justin Evans".to_string(),
+        name: "Justin Evans".to_string(),
         age: 22,
     };
 
