@@ -9,6 +9,7 @@ pub struct User {
     pub age: u64,
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq)]
 pub struct MyIndex {
     pub login_attempts: u16,
     pub logged_in: bool,
@@ -21,8 +22,8 @@ pub struct MyIndex {
 
 fn main() {
     let mut db_uncached = sfsdb::new("db_simple");
-    let mut db_indexed = sfsdb::new_indexed::<MyIndex>("db_indexed");
-    let mut db_cached = sfsdb::new_cached("db_cached", Some(20));
+    let mut db_indexed = sfsdb::new_indexed::<MyIndex>("db_indexed", Some(20), 100);
+    let mut db_cached = sfsdb::new_cached("db_cached", Some(20), 100);
 
     let justin = User {
         name: "Justin Evans".to_string(),
@@ -79,9 +80,9 @@ fn main() {
                     login_attempts: i,
                     logged_in: (i % 2 == 0),
                 },
-            );
+            ).unwrap();
         }
-        print!("\n(Indexed) Saving justin 1000 times took: ");
+        print!("\n(Indexed + Cached) Saving justin 1000 times took: ");
     });
     // Loading from an cached database
     bench(&mut db_indexed, |db| {
@@ -90,20 +91,20 @@ fn main() {
             // performance improvements of caching wouldn't show
             let _justin = db.load::<User>("400").unwrap();
         }
-        print!("(Indexed) Loading justin (with key '400') 1000 times took: ");
+        print!("(Indexed + Cached) Loading justin (with key '400') 1000 times took: ");
     });
     // Dispatching index query actions
     bench(&mut db_indexed, |db| {
         let logged_in_users = db.search_with(|i| i.logged_in);
         print!(
-            "(Indexed) Querying for all logged-in users (which yielded {} results) took: ",
+            "(Indexed + Cached) Querying for all logged-in users (which yielded {} results) took: ",
             logged_in_users.len()
         );
     });
     bench(&mut db_indexed, |db| {
         let locked_out_users = db.search_with(|i| i.login_attempts > 820);
         print!(
-            "(Indexed) Querying for all locked-out users (which yielded {} results) took: ",
+            "(Indexed + Cached) Querying for all locked-out users (which yielded {} results) took: ",
             locked_out_users.len()
         );
     });
