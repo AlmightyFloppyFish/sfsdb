@@ -1,8 +1,15 @@
 [package]
 name = "sfsdb"
+description = "A simple, optionally cached and indexed, extensible file-system database you already know how to use"
 version = "0.1.0"
+readme = "README.md"
+documentation = "https://docs.rs/sfsdb"
 authors = ["Simon <simon.larsson-general@protonmail.com>"]
+license = "MIT"
 edition = "2018"
+repository = "https://github.com/AlmightyFloppyFish/sfsdb.git"
+homepage = "https://github.com/AlmightyFloppyFish/sfsdb/"
+keywords = ["KV", "database"]
 
 [dependencies]
 rmp-serde = "0.13.7"
