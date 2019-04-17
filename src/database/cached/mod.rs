@@ -4,8 +4,8 @@ use crate::filesystem::{fs_delete, fs_load, fs_save};
 use crate::GenericDatabase;
 use std::fs::read;
 
-use bincode::deserialize;
 use hashbrown::HashMap;
+use rmp_serde::{decode, encode};
 use serde::{Deserialize, Serialize};
 
 use std::path::PathBuf;
@@ -55,7 +55,7 @@ impl GenericDatabase for CachedDB {
             }
             self.cache.content.insert(
                 k.clone(),
-                match bincode::serialize(value) {
+                match encode::to_vec(value) {
                     Ok(v) => v,
                     Err(_) => return Err(DBError::save(&format!("Unable to serialize {}", k))),
                 },
@@ -87,7 +87,7 @@ impl GenericDatabase for CachedDB {
                     Err(e) => Err(e),
                 }
             }
-            Some(v) => Ok(match deserialize(v) {
+            Some(v) => Ok(match decode::from_slice(v) {
                 Ok(v) => v,
                 Err(e) => return Err(DBError::load(&format!("Unable to decode {} ({})", key, e))),
             }),
