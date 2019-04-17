@@ -5,7 +5,7 @@ authors = ["Simon <simon.larsson@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
-bincode = "1.1.2"
-serde = {version = "1.0.89", features = ["derive"]}
+rmp-serde = "0.13.7"
+serde = { version = "1.0.89", features = ["derive"] }
 hashbrown = "0.1.8"
 chrono = { version = "0.4", features = ["serde"] }
