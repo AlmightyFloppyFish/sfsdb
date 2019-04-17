@@ -36,14 +36,14 @@ pub fn new(location: &str) -> SimpleDB {
     SimpleDB::new(location)
 }
 
-/// A cached database. Used the exact same way as a simple but automaticaly caches the top N most
-/// used key/value's every N loads.
+/// A cached database. Used the exact same way as a simple but automaticaly caches the top most
+/// used key/value's for faster read access.
 pub fn new_cached(location: &str, cache: Option<usize>, resync_every: u16) -> CachedDB {
     init(location);
     CachedDB::new(location, cache, resync_every)
 }
 
-/// An indexed+cached database which also allows you to bundle any struct along with your data, and
+/// An indexed+cached database which allows you to bundle any struct along with your data, and
 /// then later query it through closures.
 pub fn new_indexed<I>(location: &str, cache: Option<usize>, resync_every: u16) -> IndexedDB<I>
 where

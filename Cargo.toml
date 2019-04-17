@@ -1,11 +1,11 @@
 [package]
 name = "sfsdb"
 version = "0.1.0"
-authors = ["Simon <simon.larsson@protonmail.com>"]
+authors = ["Simon <simon.larsson-general@protonmail.com>"]
 edition = "2018"
 
 [dependencies]
 rmp-serde = "0.13.7"
 serde = { version = "1.0.89", features = ["derive"] }
 hashbrown = "0.1.8"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = "0.4.6"

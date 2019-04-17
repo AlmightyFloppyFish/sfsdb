@@ -1,32 +1,31 @@
 # Simple File-System Database
 
+Why another database?  
+  
+The problem with existing databases is that you have to learn them. 
+Sfsdb is a high performance, incredibly simple database, made to feel as native to the language as possible. If you know Rust, you can already use Sfsdb. 
+Saving and Loading data is rather simple, so why are databases so complicated and bloated?  
+  
+Meet Sfsdb
+
 ## Features
  * No runtime dependencies or external configuration
  * High performance, Just run the benchmarks!
  * Optional caching, Automatically managed for a free performance boost at no usage cost
  * Optional indexing, Bundle index data together with your saves and [query them with the Rust language itself](https://github.com/AlmightyFloppyFish/sfsdb/blob/master/examples/indexed.rs#59)
 
-## Status
-The library is usable however won't be advertised until all checks under **Todo** are completed. 
 
-### Todo
- - [x] Indexing
- - [x] Write Examples and Benchmarks
- - [x] Improve caching performance (if possible)
- - [x] Make indexes persist after restart (!important)
- - [x] CachedIndexedDB
- - [ ] Documentation
- - [ ] Upload crate!
+## Documentation
+[API Documentation](https://docs.rs/sfsdb/)
 
-### Documentation
-For now there's [the examples](https://github.com/AlmightyFloppyFish/sfsdb/tree/master/examples).  
+Or, use [the examples](https://github.com/AlmightyFloppyFish/sfsdb/tree/master/examples).  
 `$ git clone https://github.com/AlmightyFloppyFish/sfsdb; cd sfsdb`  
 `$ cargo run --release --example simple`  
 `$ cargo run --release --example cached`  
 `$ cargo run --release --example indexed`  
 `$ cargo run --release --example benchmark`  
 
-### Benchmarks
+## Benchmarks
 Don't want to compile the benchmark example? Well here's my results
 ```
 (Simple) Saving justin 1000 times took: 40.561932ms
@@ -45,3 +44,10 @@ Intel i7-6600U (4) @ 3.400GHz
 SATA SSD
 16GB RAM
 ```
+
+## Cross-language support
+There's an experimental [Golang version](https://github.com/AlmightyFloppyFish/sfsdb-go) and plans for a Haskell version.  
+They might take some time however since they aren't just ports. But full rewrites made to feel as native to the languages as possible. 
+
+## Contributing
+Code contributions are absolutely welcomed! Just put in a pull-request and make sure you format with rustfmt
