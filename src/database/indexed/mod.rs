@@ -172,6 +172,7 @@ where
         }
     }
 
+    /// Save a value of type T to the database along with an index of any type
     pub fn save_with_index<T>(&mut self, key: &str, data: &T, index: I) -> Result<(), DBError>
     where
         for<'de> T: Deserialize<'de> + Serialize + Clone,
@@ -181,6 +182,7 @@ where
         Ok(self.index.attach(key, index))
     }
 
+    /// Attach an index to key
     pub fn add_index(&mut self, key: &str, index: I) -> Result<(), DBError> {
         if key == "" {
             return Err(DBError::index("Empty key"));
@@ -189,10 +191,12 @@ where
         Ok(self.index.attach(key, index))
     }
 
+    /// Get the index attached to key
     pub fn get_index(&self, key: &str) -> Option<&I> {
         self.index.get(key)
     }
 
+    /// Mutate an existing index
     pub fn edit_index<F>(&mut self, key: &str, with: F) -> Result<(), DBError>
     where
         F: FnMut(I) -> I,
@@ -201,6 +205,7 @@ where
         Ok(())
     }
 
+    /// Remove index attached to key
     pub fn delete_index(&mut self, key: &str) {
         if key == "" {
             return;
@@ -209,6 +214,8 @@ where
         self.index.delete(key);
     }
 
+    /// Dispatch a query with a closure that returns true or false using the index, depending on if it's a match or
+    /// not.
     pub fn search_with<F>(&self, apply: F) -> Vec<String>
     where
         F: Fn(&I) -> bool,
@@ -222,7 +229,7 @@ where
         return results;
     }
 
-    pub fn new(location: &str, cache_limit: Option<usize>, resync_every: u16) -> Self {
+    pub(crate) fn new(location: &str, cache_limit: Option<usize>, resync_every: u16) -> Self {
         // Load existing fs index
         let mut index = index::Index::new(location);
 
