@@ -17,6 +17,9 @@ Meet Sfsdb
 ## Status
 Some concerns have been raised about how redundency is handled during concurrent access. This has made me rethink some of the design decision and some internal drastic changes will be made. For these reasons I cannot recommend using Sfsdb in production yet.  
   
+## Usage
+At it's core the only required functions are `new(location)`, `save(key, value)` and `<T>::load(key)`. However there's more abstractions using closures if you're using the Indexed version. The goal is to have a simple core that's extensible through intergrations of the Rust language itself.  
+  
 ## Documentation
 [API Documentation](https://docs.rs/sfsdb/)
 
