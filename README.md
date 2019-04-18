@@ -4,7 +4,7 @@ Why another database?
   
 The problem with existing databases is that you have to learn them. 
 Sfsdb is a high performance, incredibly simple yet extensible database, made to feel as native to the language as possible. If you know Rust, you can already use Sfsdb. 
-Saving and Loading data is rather simple, so why are databases so complicated and bloated?  
+Saving and Loading data is rather simple, so why is putting it in a databses so complicated?  
   
 Meet Sfsdb
 
