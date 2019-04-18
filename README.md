@@ -14,7 +14,9 @@ Meet Sfsdb
  * Optional caching, Automatically managed for a free performance boost at no usage cost
  * Optional indexing, Bundle index data together with your saves and [query them with the Rust language itself](https://github.com/AlmightyFloppyFish/sfsdb/blob/master/examples/indexed.rs#59)
 
-
+## Status
+Some concerns have been raised about how redundency is handled during concurrent access. This has made me rethink some of the design decision and some internal drastic changes will be made. For these reasons I cannot recommend using Sfsdb in production yet.  
+  
 ## Documentation
 [API Documentation](https://docs.rs/sfsdb/)
 
